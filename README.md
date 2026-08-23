@@ -11,15 +11,16 @@ Lightweight Paper plugin: records where a player came from on cross-world telepo
 | API 版本 / api-version | `'26.2'` |
 | Java | 25 |
 | 依赖 / Dependency | `io.papermc.paper:paper-api:26.2.build.112-stable` (compileOnly) |
-| 构建产物 / Artifact | `build/libs/VoidReturn-1.1.0.jar` |
+| 构建产物 / Artifact | `build/libs/VoidReturn-1.2.0.jar` |
 
 ## 功能 / Features
 
 - 跨世界传送时记录来源（世界 + 坐标），每次跨世界覆盖旧记录 / Records the source location (world + coords) on every cross-world teleport, overwriting the previous one
 - 来源持久化到 `data.yml`，重启后保留 / Sources are persisted to `data.yml`, surviving restarts
 - 仅在 `config.yml` 启用的世界触发虚空检测 / Void detection only in worlds listed in `config.yml`
-- 安全落点检测 + 3 格半径搜索 / Safe landing spot check + 3-block radius search
+- 安全落点检测 + 3 格半径搜索，传送后重置下落状态防摔死 / Safe landing spot check + 3-block radius search; resets fall state after teleport to prevent fall damage
 - 无可回记录时回退到世界 fallback / Falls back to the world fallback when no source is recorded
+- 救援时可发送满屏字幕 / 聊天框提示（可配置）/ Configurable full-screen title / chat notification on rescue
 
 ## 使用文档 / Documentation
 

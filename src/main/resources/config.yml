@@ -10,3 +10,10 @@ enabled-worlds:
       z: 0.5
       yaw: 0
       pitch: 0
+
+# Rescue notification, sent when a player is saved from the void.
+# Leave a value empty ("") to disable that form. Supports & color codes.
+message:
+  title: "&6虚空回溯"
+  subtitle: "&e你已被传送回来源位置"
+  chat: ""

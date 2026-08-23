@@ -1,10 +1,12 @@
 package dev.voidreturn;
 
+import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -14,12 +16,16 @@ import java.util.Map;
 public final class VoidReturnPlugin extends JavaPlugin implements CommandExecutor {
 
     final Map<String, WorldConfig> worldConfigs = new HashMap<>();
+    String msgTitle;
+    String msgSubtitle;
+    String msgChat;
     private VoidListener listener;
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
         loadWorldConfigs();
+        loadMessageConfig();
         listener = new VoidListener(this, new File(getDataFolder(), "data.yml"));
         getServer().getPluginManager().registerEvents(listener, this);
         PluginCommand command = getCommand("voidreturn");
@@ -63,6 +69,24 @@ public final class VoidReturnPlugin extends JavaPlugin implements CommandExecuto
         getLogger().info("Void detection enabled for worlds: " + worldConfigs.keySet());
     }
 
+    void loadMessageConfig() {
+        ConfigurationSection m = getConfig().getConfigurationSection("message");
+        msgTitle = m == null ? null : m.getString("title");
+        msgSubtitle = m == null ? null : m.getString("subtitle");
+        msgChat = m == null ? null : m.getString("chat");
+    }
+
+    void sendRescueMessage(Player player) {
+        if ((msgTitle != null && !msgTitle.isEmpty()) || (msgSubtitle != null && !msgSubtitle.isEmpty())) {
+            player.sendTitle(msgTitle == null || msgTitle.isEmpty() ? "" : ChatColor.translateAlternateColorCodes('&', msgTitle),
+                    msgSubtitle == null || msgSubtitle.isEmpty() ? "" : ChatColor.translateAlternateColorCodes('&', msgSubtitle),
+                    10, 70, 20);
+        }
+        if (msgChat != null && !msgChat.isEmpty()) {
+            player.sendMessage(ChatColor.translateAlternateColorCodes('&', msgChat));
+        }
+    }
+
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!sender.hasPermission("voidreturn.reload")) {
@@ -72,6 +96,7 @@ public final class VoidReturnPlugin extends JavaPlugin implements CommandExecuto
         if (args.length == 1 && args[0].equalsIgnoreCase("reload")) {
             reloadConfig();
             loadWorldConfigs();
+            loadMessageConfig();
             sender.sendMessage("VoidReturn reloaded. Enabled worlds: " + worldConfigs.keySet());
             return true;
         }

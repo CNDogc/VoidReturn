@@ -28,6 +28,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.util.Vector;
 
 import java.io.File;
 import java.io.IOException;
@@ -105,6 +106,10 @@ public final class VoidListener implements Listener {
         rescuing.add(id);
         try {
             player.teleport(safe);
+            // Reset fall state so the player does not die from the earlier fall.
+            player.setFallDistance(0f);
+            player.setVelocity(new Vector(0, 0, 0));
+            plugin.sendRescueMessage(player);
         } finally {
             rescuing.remove(id);
         }
