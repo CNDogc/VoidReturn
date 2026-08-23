@@ -13,10 +13,14 @@
  */
 package dev.voidreturn;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -25,6 +29,8 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -36,14 +42,17 @@ public final class VoidListener implements Listener {
     private static final int SEARCH_RADIUS = 3;
 
     private final VoidReturnPlugin plugin;
+    private final File dataFile;
     // Latest cross-world teleport origin per player; every cross-world hop overwrites the previous one.
     private final Map<UUID, Location> lastSource = new ConcurrentHashMap<>();
     private final Map<UUID, Long> lastRescue = new ConcurrentHashMap<>();
     // Players currently being rescued by this plugin, so our own teleport does not overwrite their source record.
     private final Set<UUID> rescuing = ConcurrentHashMap.newKeySet();
 
-    VoidListener(VoidReturnPlugin plugin) {
+    VoidListener(VoidReturnPlugin plugin, File dataFile) {
         this.plugin = plugin;
+        this.dataFile = dataFile;
+        loadSources();
     }
 
     // MONITOR: record the final, non-cancelled outcome of the teleport.
@@ -59,6 +68,7 @@ public final class VoidListener implements Listener {
             return;
         }
         lastSource.put(player.getUniqueId(), from.clone());
+        saveSourcesAsync();
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
@@ -102,9 +112,67 @@ public final class VoidListener implements Listener {
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
-        UUID id = event.getPlayer().getUniqueId();
-        lastSource.remove(id);
-        lastRescue.remove(id);
+        // Cooldown is transient; keep the source record (persisted) for when the player returns.
+        lastRescue.remove(event.getPlayer().getUniqueId());
+        saveSourcesAsync();
+    }
+
+    private void loadSources() {
+        if (!dataFile.exists()) {
+            return;
+        }
+        FileConfiguration data = YamlConfiguration.loadConfiguration(dataFile);
+        ConfigurationSection sources = data.getConfigurationSection("sources");
+        if (sources == null) {
+            return;
+        }
+        for (String key : sources.getKeys(false)) {
+            ConfigurationSection s = sources.getConfigurationSection(key);
+            if (s == null) {
+                continue;
+            }
+            World world = Bukkit.getWorld(s.getString("world", ""));
+            if (world == null) {
+                continue;
+            }
+            UUID id;
+            try {
+                id = UUID.fromString(key);
+            } catch (IllegalArgumentException ex) {
+                continue;
+            }
+            lastSource.put(id, new Location(world, s.getDouble("x"), s.getDouble("y"), s.getDouble("z"),
+                    (float) s.getDouble("yaw"), (float) s.getDouble("pitch")));
+        }
+    }
+
+    // Async write keeps disk I/O off the main thread; called after each source change.
+    private void saveSourcesAsync() {
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, this::saveSources);
+    }
+
+    void saveSources() {
+        YamlConfiguration data = new YamlConfiguration();
+        ConfigurationSection sources = data.createSection("sources");
+        for (Map.Entry<UUID, Location> entry : lastSource.entrySet()) {
+            Location loc = entry.getValue();
+            World world = loc.getWorld();
+            if (world == null) {
+                continue;
+            }
+            ConfigurationSection s = sources.createSection(entry.getKey().toString());
+            s.set("world", world.getName());
+            s.set("x", loc.getX());
+            s.set("y", loc.getY());
+            s.set("z", loc.getZ());
+            s.set("yaw", loc.getYaw());
+            s.set("pitch", loc.getPitch());
+        }
+        try {
+            data.save(dataFile);
+        } catch (IOException e) {
+            plugin.getLogger().warning("Failed to save " + dataFile.getName() + ": " + e.getMessage());
+        }
     }
 
     private Location findSafe(Location start) {

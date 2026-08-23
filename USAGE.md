@@ -10,8 +10,8 @@
 玩家跨世界传送后，插件自动记录「传送前的世界 + 坐标」。当玩家在已启用世界中掉入虚空（低于阈值）时，自动传送回该来源位置。
 After a player teleports across worlds, the plugin records the "world + coords" they came from. When the player falls into the void (below the threshold) in an enabled world, they are automatically sent back to that source.
 
-- 来源记忆仅存于内存（`Map<UUID, Location>`），每次跨世界覆盖旧记录，只保留最近一次，服务器重启即清空。
-  The source is kept in memory only; every cross-world teleport overwrites the old record, keeping only the latest. Cleared on server restart.
+- 来源记忆：内存热读 + 持久化到 `plugins/VoidReturn/data.yml`，每次跨世界覆盖旧记录，只保留最近一次，**重启后仍保留**。
+  Sources are read from memory (fast) and persisted to `plugins/VoidReturn/data.yml`; every cross-world teleport overwrites the old record, keeping only the latest. **They survive restarts.**
 - 只有 `config.yml` 中显式启用的世界才触发检测。
   Only worlds explicitly listed in `config.yml` trigger detection.
 
@@ -71,8 +71,8 @@ enabled-worlds:
 
 ## 6. 工作原理 / How It Works
 
-1. **记录来源 / Record source**：跨世界传送（`from` 世界 ≠ `to` 世界）时记录「传送前位置」，覆盖旧记录。不跨世界不记录。
-   On any cross-world teleport (`from` world ≠ `to` world), the pre-teleport location is recorded, overwriting the old one. Same-world teleports are ignored.
+1. **记录来源 / Record source**：跨世界传送（`from` 世界 ≠ `to` 世界）时记录「传送前位置」，覆盖旧记录，并**异步写入 data.yml**。不跨世界不记录。
+   On any cross-world teleport (`from` world ≠ `to` world), the pre-teleport location is recorded, overwriting the old one, and **asynchronously written to data.yml**. Same-world teleports are ignored.
 2. **检测虚空 / Detect void**：玩家在启用世界移动且 Y 低于阈值、不在冷却内时触发。
    Triggers when a player in an enabled world moves below the threshold and is not on cooldown.
 3. **选择落点 / Choose landing spot**：
@@ -99,7 +99,7 @@ enabled-worlds:
 - 修改 `fallback` 坐标后重载 / Edit the `fallback` coords and reload
 
 **Q：来源记录保留多久 / How long is the source kept?**
-- 仅内存：跨世界覆盖、退出时清除、重启清空 / In-memory only: overwritten per cross-world hop, cleared on quit, emptied on restart
+- 持久保存：直到下一次跨世界覆盖为止；存于 `data.yml`，退出/重启均保留 / Persisted until the next cross-world hop; stored in `data.yml`, survives quit and restart
 
 ## 8. 兼容性与构建 / Compatibility & Build
 

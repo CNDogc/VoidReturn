@@ -7,23 +7,34 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
 public final class VoidReturnPlugin extends JavaPlugin implements CommandExecutor {
 
     final Map<String, WorldConfig> worldConfigs = new HashMap<>();
+    private VoidListener listener;
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
         loadWorldConfigs();
-        getServer().getPluginManager().registerEvents(new VoidListener(this), this);
+        listener = new VoidListener(this, new File(getDataFolder(), "data.yml"));
+        getServer().getPluginManager().registerEvents(listener, this);
         PluginCommand command = getCommand("voidreturn");
         if (command != null) {
             command.setExecutor(this);
         } else {
             getLogger().warning("Command 'voidreturn' missing from plugin.yml");
+        }
+    }
+
+    @Override
+    public void onDisable() {
+        if (listener != null) {
+            getServer().getScheduler().cancelTasks(this);
+            listener.saveSources();
         }
     }
 

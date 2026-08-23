@@ -16,7 +16,7 @@ Lightweight Paper plugin: records where a player came from on cross-world telepo
 ## 功能 / Features
 
 - 跨世界传送时记录来源（世界 + 坐标），每次跨世界覆盖旧记录 / Records the source location (world + coords) on every cross-world teleport, overwriting the previous one
-- 仅内存存储，重启即清空 / In-memory only, cleared on restart
+- 来源持久化到 `data.yml`，重启后保留 / Sources are persisted to `data.yml`, surviving restarts
 - 仅在 `config.yml` 启用的世界触发虚空检测 / Void detection only in worlds listed in `config.yml`
 - 安全落点检测 + 3 格半径搜索 / Safe landing spot check + 3-block radius search
 - 无可回记录时回退到世界 fallback / Falls back to the world fallback when no source is recorded
