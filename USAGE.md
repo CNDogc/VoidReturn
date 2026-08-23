@@ -1,6 +1,6 @@
 # VoidReturn 虚空回溯 · 使用文档 / Usage Guide
 
-> 版本 / Version 1.0.0 · Paper 26.2（Java 25）· 轻量来源记忆型虚空传送插件
+> 版本 / Version 1.1.0 · Paper 26.2（Java 25）· 轻量来源记忆型虚空传送插件
 > Lightweight source-memory void teleport plugin
 
 ---
@@ -17,7 +17,7 @@ After a player teleports across worlds, the plugin records the "world + coords" 
 
 ## 2. 安装 / Installation
 
-1. 将 `VoidReturn-1.0.0.jar` 放入服务器 `plugins/` 目录。Put the jar into the server's `plugins/` folder.
+1. 将 `VoidReturn-1.1.0.jar` 放入服务器 `plugins/` 目录。Put the jar into the server's `plugins/` folder.
 2. 重启服务器（首次启动自动生成 `plugins/VoidReturn/config.yml`）。Restart the server (config is auto-generated on first start).
 3. 编辑 `config.yml` 加入实际世界名，执行 `/voidreturn reload` 热重载。Edit `config.yml` to add your real world names, then `/voidreturn reload` (no restart needed).
 
@@ -105,4 +105,4 @@ enabled-worlds:
 
 - 目标 / Target：Paper 26.2（api-version `26.2`），Java 25
 - 依赖 / Dependency：`io.papermc.paper:paper-api:26.2.build.112-stable`（compileOnly）
-- 构建 / Build：`.\gradlew.bat build`，产物 / artifact：`build/libs/VoidReturn-1.0.0.jar`
+- 构建 / Build：`.\gradlew.bat build`，产物 / artifact：`build/libs/VoidReturn-1.1.0.jar`
