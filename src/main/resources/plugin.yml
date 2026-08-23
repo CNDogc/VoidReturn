@@ -1,0 +1,14 @@
+name: VoidReturn
+version: 1.0.0
+main: dev.voidreturn.VoidReturnPlugin
+api-version: '26.2'
+description: Sends players falling into the void back to their last cross-world origin.
+commands:
+  voidreturn:
+    description: VoidReturn admin command
+    usage: /voidreturn reload
+    permission: voidreturn.reload
+permissions:
+  voidreturn.reload:
+    description: Allows reloading the VoidReturn config
+    default: op

@@ -1,0 +1,12 @@
+# Only worlds listed here trigger void detection. Add one section per world.
+# fallback is used when a player has no recorded cross-world source yet.
+enabled-worlds:
+  spawn:
+    void-threshold: -64
+    cooldown-secs: 3
+    fallback:
+      x: 0.5
+      y: 70.0
+      z: 0.5
+      yaw: 0
+      pitch: 0
