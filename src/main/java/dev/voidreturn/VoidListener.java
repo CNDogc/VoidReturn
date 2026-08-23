@@ -41,6 +41,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class VoidListener implements Listener {
 
     private static final int SEARCH_RADIUS = 3;
+    private static final int SAVE_INTERVAL_TICKS = 40; // 2s debounce window
 
     private final VoidReturnPlugin plugin;
     private final File dataFile;
@@ -49,11 +50,13 @@ public final class VoidListener implements Listener {
     private final Map<UUID, Long> lastRescue = new ConcurrentHashMap<>();
     // Players currently being rescued by this plugin, so our own teleport does not overwrite their source record.
     private final Set<UUID> rescuing = ConcurrentHashMap.newKeySet();
+    private volatile boolean dirty = false;
 
     VoidListener(VoidReturnPlugin plugin, File dataFile) {
         this.plugin = plugin;
         this.dataFile = dataFile;
         loadSources();
+        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, this::tickSave, SAVE_INTERVAL_TICKS, SAVE_INTERVAL_TICKS);
     }
 
     // MONITOR: record the final, non-cancelled outcome of the teleport.
@@ -151,9 +154,16 @@ public final class VoidListener implements Listener {
         }
     }
 
-    // Async write keeps disk I/O off the main thread; called after each source change.
+    // Coalesce writes: mark dirty; the periodic async task flushes at most every 2s.
     private void saveSourcesAsync() {
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, this::saveSources);
+        dirty = true;
+    }
+
+    private void tickSave() {
+        if (dirty) {
+            dirty = false;
+            saveSources();
+        }
     }
 
     void saveSources() {
@@ -198,6 +208,11 @@ public final class VoidListener implements Listener {
     }
 
     private boolean isSafe(Location location) {
+        World world = location.getWorld();
+        // Skip chunks that are not loaded to avoid synchronous chunk loads on the main thread.
+        if (world == null || !world.isChunkLoaded(location.getBlockX() >> 4, location.getBlockZ() >> 4)) {
+            return false;
+        }
         Block feet = location.getBlock();
         return feet.getType().isAir()
                 && feet.getRelative(BlockFace.UP).getType().isAir()
