@@ -10,7 +10,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public final class VoidReturnPlugin extends JavaPlugin implements CommandExecutor {
@@ -57,6 +59,13 @@ public final class VoidReturnPlugin extends JavaPlugin implements CommandExecuto
                 continue;
             }
             ConfigurationSection fallback = section.getConfigurationSection("fallback");
+            List<MessageSpec> messages = new ArrayList<>();
+            for (Map<?, ?> item : section.getMapList("messages")) {
+                MsgType type = WorldConfig.parseType(String.valueOf(item.get("type")));
+                if (type != null) {
+                    messages.add(new MessageSpec(type, String.valueOf(item.get("text"))));
+                }
+            }
             worldConfigs.put(world, new WorldConfig(
                     section.getDouble("void-threshold", -64.0),
                     section.getInt("cooldown-secs", 3) * 1000L,
@@ -64,7 +73,9 @@ public final class VoidReturnPlugin extends JavaPlugin implements CommandExecuto
                     fallback == null ? 70.0 : fallback.getDouble("y", 70.0),
                     fallback == null ? 0.5 : fallback.getDouble("z", 0.5),
                     (float) (fallback == null ? 0.0 : fallback.getDouble("yaw", 0.0)),
-                    (float) (fallback == null ? 0.0 : fallback.getDouble("pitch", 0.0))));
+                    (float) (fallback == null ? 0.0 : fallback.getDouble("pitch", 0.0)),
+                    section.getInt("delay-secs", 0),
+                    messages));
         }
         getLogger().info("Void detection enabled for worlds: " + worldConfigs.keySet());
     }

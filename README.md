@@ -21,6 +21,7 @@ Lightweight Paper plugin: records where a player came from on cross-world telepo
 - 安全落点检测 + 3 格半径搜索，传送后重置下落状态防摔死 / Safe landing spot check + 3-block radius search; resets fall state after teleport to prevent fall damage
 - 无可回记录时回退到世界 fallback / Falls back to the world fallback when no source is recorded
 - 救援时可发送满屏字幕 / 聊天框提示（可配置）/ Configurable full-screen title / chat notification on rescue
+- 可配置倒计时传送：掉虚空后按 TITLE/SUBTITLE/ACTION_BAR/CHAT/BOSS_BAR 多形式消息倒计时，再传回来源 / Configurable countdown: multi-form messages (TITLE/SUBTITLE/ACTION_BAR/CHAT/BOSS_BAR) with auto countdown, then teleport back
 
 ## 使用文档 / Documentation
 

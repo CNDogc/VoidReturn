@@ -4,14 +4,30 @@ enabled-worlds:
   spawn:
     void-threshold: -64
     cooldown-secs: 3
+    # Countdown before teleporting back (in seconds). 0 = instant rescue.
+    delay-secs: 3
     fallback:
       x: 0.5
       y: 70.0
       z: 0.5
       yaw: 0
       pitch: 0
+    # Messages shown while the player is falling during the countdown.
+    # {seconds} = remaining countdown (auto countdown). Multiple forms can be combined.
+    # Forms: TITLE, SUBTITLE, ACTION_BAR, CHAT, BOSS_BAR
+    messages:
+      - type: TITLE
+        text: "&6正在前往伊甸"
+      - type: SUBTITLE
+        text: "&e虚空回溯中..."
+      - type: ACTION_BAR
+        text: "&e{seconds} 秒后传送"
+      - type: CHAT
+        text: "&a即将传回来源位置..."
+      - type: BOSS_BAR
+        text: "&6虚空回溯"
 
-# Rescue notification, sent when a player is saved from the void.
+# Rescue notification, sent when the player is finally saved (after the countdown).
 # Leave a value empty ("") to disable that form. Supports & color codes.
 message:
   title: "&6虚空回溯"

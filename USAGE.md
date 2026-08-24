@@ -1,6 +1,6 @@
 # VoidReturn 虚空回溯 · 使用文档 / Usage Guide
 
-> 版本 / Version 1.2.0 · Paper 26.2（Java 25）· 轻量来源记忆型虚空传送插件
+> 版本 / Version 2.0.0 · Paper 26.2（Java 25）· 轻量来源记忆型虚空传送插件
 > Lightweight source-memory void teleport plugin
 
 ---
@@ -17,7 +17,7 @@ After a player teleports across worlds, the plugin records the "world + coords" 
 
 ## 2. 安装 / Installation
 
-1. 将 `VoidReturn-1.2.0.jar` 放入服务器 `plugins/` 目录。Put the jar into the server's `plugins/` folder.
+1. 将 `VoidReturn-2.0.0.jar` 放入服务器 `plugins/` 目录。Put the jar into the server's `plugins/` folder.
 2. 重启服务器（首次启动自动生成 `plugins/VoidReturn/config.yml`）。Restart the server (config is auto-generated on first start).
 3. 编辑 `config.yml` 加入实际世界名，执行 `/voidreturn reload` 热重载。Edit `config.yml` to add your real world names, then `/voidreturn reload` (no restart needed).
 
@@ -67,7 +67,24 @@ enabled-worlds:
 | `fallback.x / y / z` | double | 0.5 / 70.0 / 0.5 | 回退坐标 / Fallback coords |
 | `fallback.yaw / pitch` | float | 0 / 0 | 回退朝向 / Fallback yaw/pitch |
 
-**救援提示 / Rescue notification**：玩家被从虚空救回时发送，支持 `&` 颜色代码。留空 `""` 则禁用对应形式。
+**倒计时传送 / Countdown rescue**：`delay-secs` 指定传回前的倒计时秒数（0 = 立即传送）；配置了 `messages` 列表则倒计时期间发送对应消息，`{seconds}` 会自动替换为剩余秒数。多种形式可同时叠加，形式支持：`TITLE` / `SUBTITLE` / `ACTION_BAR` / `CHAT` / `BOSS_BAR`。倒计时期间玩家正常下坠且不会死亡。
+
+```yaml
+delay-secs: 3
+messages:
+  - type: TITLE
+    text: "&6正在前往伊甸"
+  - type: SUBTITLE
+    text: "&e虚空回溯中..."
+  - type: ACTION_BAR
+    text: "&e{seconds} 秒后传送"
+  - type: CHAT
+    text: "&a即将传回来源位置..."
+  - type: BOSS_BAR
+    text: "&6虚空回溯"
+```
+
+**救援提示 / Rescue notification**：玩家最终被传回时发送，支持 `&` 颜色代码。留空 `""` 则禁用对应形式。
 
 ```yaml
 message:
@@ -116,4 +133,4 @@ message:
 
 - 目标 / Target：Paper 26.2（api-version `26.2`），Java 25
 - 依赖 / Dependency：`io.papermc.paper:paper-api:26.2.build.112-stable`（compileOnly）
-- 构建 / Build：`.\gradlew.bat build`，产物 / artifact：`build/libs/VoidReturn-1.2.0.jar`
+- 构建 / Build：`.\gradlew.bat build`，产物 / artifact：`build/libs/VoidReturn-2.0.0.jar`

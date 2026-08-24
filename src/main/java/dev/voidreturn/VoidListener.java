@@ -18,6 +18,9 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.boss.BarColor;
+import org.bukkit.boss.BarStyle;
+import org.bukkit.boss.BossBar;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -28,6 +31,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 
 import java.io.File;
@@ -50,6 +54,8 @@ public final class VoidListener implements Listener {
     private final Map<UUID, Long> lastRescue = new ConcurrentHashMap<>();
     // Players currently being rescued by this plugin, so our own teleport does not overwrite their source record.
     private final Set<UUID> rescuing = ConcurrentHashMap.newKeySet();
+    // Players inside an active countdown, so repeated move events do not re-trigger it.
+    private final Set<UUID> countingDown = ConcurrentHashMap.newKeySet();
     private volatile boolean dirty = false;
 
     VoidListener(VoidReturnPlugin plugin, File dataFile) {
@@ -84,15 +90,112 @@ public final class VoidListener implements Listener {
         }
 
         Player player = event.getPlayer();
+        UUID id = player.getUniqueId();
+        if (countingDown.contains(id)) {
+            return;
+        }
         long now = System.currentTimeMillis();
-        Long last = lastRescue.get(player.getUniqueId());
+        Long last = lastRescue.get(id);
         if (last != null && now - last < config.cooldownMillis()) {
             return;
         }
 
-        Location target = lastSource.get(player.getUniqueId());
+        if (config.hasCountdown()) {
+            startCountdown(player, config);
+        } else {
+            performRescue(player, config);
+        }
+    }
+
+    private void startCountdown(Player player, WorldConfig config) {
+        UUID id = player.getUniqueId();
+        long now = System.currentTimeMillis();
+        lastRescue.put(id, now);
+        countingDown.add(id);
+
+        int totalSecs = config.delaySecs();
+        int totalTicks = totalSecs * 20;
+
+        BossBar bar = null;
+        for (MessageSpec m : config.messages()) {
+            if (m.type() == MsgType.BOSS_BAR) {
+                bar = Bukkit.createBossBar(m.text(), BarColor.PURPLE, BarStyle.SOLID);
+                bar.addPlayer(player);
+                bar.setProgress(1.0);
+                break;
+            }
+        }
+        updateCountdown(player, config, totalSecs, bar);
+
+        final int[] elapsed = {0};
+        final BossBar bossBar = bar;
+        final BukkitTask[] task = new BukkitTask[1];
+        task[0] = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+            if (!player.isOnline()) {
+                task[0].cancel();
+                if (bossBar != null) {
+                    bossBar.removePlayer(player);
+                }
+                countingDown.remove(id);
+                return;
+            }
+            elapsed[0]++;
+            // Let the player keep falling, but never die from it.
+            player.setFallDistance(0f);
+            double minY = player.getWorld().getMinHeight() + 1;
+            if (player.getLocation().getY() < minY) {
+                Location hold = player.getLocation().clone();
+                hold.setY(minY);
+                player.teleport(hold);
+                player.setVelocity(new Vector(0, 0, 0));
+            }
+            if (elapsed[0] % 20 == 0) {
+                updateCountdown(player, config, Math.max(0, totalSecs - elapsed[0] / 20), bossBar);
+            }
+            if (elapsed[0] >= totalTicks) {
+                task[0].cancel();
+                if (bossBar != null) {
+                    bossBar.removePlayer(player);
+                }
+                countingDown.remove(id);
+                performRescue(player, config);
+            }
+        }, 0, 1);
+    }
+
+    private void updateCountdown(Player player, WorldConfig config, int remaining, BossBar bar) {
+        String title = null, subtitle = null, actionBar = null, chat = null;
+        for (MessageSpec m : config.messages()) {
+            String text = m.text().replace("{seconds}", String.valueOf(remaining));
+            switch (m.type()) {
+                case TITLE -> title = text;
+                case SUBTITLE -> subtitle = text;
+                case ACTION_BAR -> actionBar = text;
+                case CHAT -> chat = text;
+                case BOSS_BAR -> {
+                    if (bar != null) {
+                        bar.setTitle(text);
+                        bar.setProgress(config.delaySecs() > 0 ? (double) remaining / config.delaySecs() : 1.0);
+                    }
+                }
+            }
+        }
+        if (title != null || subtitle != null) {
+            player.sendTitle(title == null ? "" : title, subtitle == null ? "" : subtitle, 10, 40, 10);
+        }
+        if (actionBar != null) {
+            player.sendActionBar(actionBar);
+        }
+        if (chat != null) {
+            player.sendMessage(chat);
+        }
+    }
+
+    private void performRescue(Player player, WorldConfig config) {
+        UUID id = player.getUniqueId();
+        Location target = lastSource.get(id);
         if (target == null || !target.isWorldLoaded()) {
-            target = new Location(to.getWorld(), config.fallbackX(), config.fallbackY(), config.fallbackZ(),
+            target = new Location(player.getWorld(), config.fallbackX(), config.fallbackY(), config.fallbackZ(),
                     config.fallbackYaw(), config.fallbackPitch());
         }
 
@@ -104,8 +207,7 @@ public final class VoidListener implements Listener {
             safe = world.getSpawnLocation();
         }
 
-        UUID id = player.getUniqueId();
-        lastRescue.put(id, now);
+        lastRescue.put(id, System.currentTimeMillis());
         rescuing.add(id);
         try {
             player.teleport(safe);
@@ -120,8 +222,10 @@ public final class VoidListener implements Listener {
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
+        UUID id = event.getPlayer().getUniqueId();
         // Cooldown is transient; keep the source record (persisted) for when the player returns.
-        lastRescue.remove(event.getPlayer().getUniqueId());
+        lastRescue.remove(id);
+        countingDown.remove(id);
         saveSourcesAsync();
     }
 
