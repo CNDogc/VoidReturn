@@ -5,9 +5,12 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -21,6 +24,7 @@ public final class VoidReturnPlugin extends JavaPlugin implements CommandExecuto
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        migrateConfig();
         loadWorldConfigs();
         listener = new VoidListener(this, new File(getDataFolder(), "data.yml"));
         getServer().getPluginManager().registerEvents(listener, this);
@@ -38,6 +42,38 @@ public final class VoidReturnPlugin extends JavaPlugin implements CommandExecuto
             getServer().getScheduler().cancelTasks(this);
             listener.saveSources();
         }
+    }
+
+    // Merge new fields from the bundled default into an existing config, preserving user edits.
+    private void migrateConfig() {
+        YamlConfiguration bundled = YamlConfiguration.loadConfiguration(
+                new InputStreamReader(getResource("config.yml"), StandardCharsets.UTF_8));
+        int bundledVersion = bundled.getInt("config-version", 1);
+        if (getConfig().getInt("config-version", 0) >= bundledVersion) {
+            return;
+        }
+        ConfigurationSection worlds = getConfig().getConfigurationSection("enabled-worlds");
+        ConfigurationSection template = bundled.getConfigurationSection("enabled-worlds.spawn");
+        if (worlds != null && template != null) {
+            for (String world : worlds.getKeys(false)) {
+                ConfigurationSection ws = worlds.getConfigurationSection(world);
+                if (ws == null) {
+                    continue;
+                }
+                if (!ws.contains("delay-secs")) {
+                    ws.set("delay-secs", template.getInt("delay-secs", 3));
+                }
+                if (!ws.contains("countdown")) {
+                    ws.set("countdown", template.getList("countdown"));
+                }
+                if (!ws.contains("arrival")) {
+                    ws.set("arrival", template.getList("arrival"));
+                }
+            }
+        }
+        getConfig().set("config-version", bundledVersion);
+        saveConfig();
+        getLogger().info("Config migrated to version " + bundledVersion);
     }
 
     void loadWorldConfigs() {

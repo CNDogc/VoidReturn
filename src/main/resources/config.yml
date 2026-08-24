@@ -1,3 +1,7 @@
+# Config schema version. On plugin update, new fields are merged into existing
+# configs automatically while preserving your edits. Do not remove this key.
+config-version: 2
+
 # Only worlds listed here trigger void detection. Add one section per world.
 # fallback is used when a player has no recorded cross-world source yet.
 enabled-worlds:
