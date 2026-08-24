@@ -63,14 +63,22 @@ public final class VoidReturnPlugin extends JavaPlugin implements CommandExecuto
                 if (!ws.contains("delay-secs")) {
                     ws.set("delay-secs", template.getInt("delay-secs", 3));
                 }
-                if (!ws.contains("countdown")) {
-                    ws.set("countdown", template.getList("countdown"));
+                if (!ws.contains("before-messages")) {
+                    // carry over old "countdown" values, otherwise use the template defaults
+                    Object old = ws.get("countdown");
+                    ws.set("before-messages", old != null ? old : template.getList("before-messages"));
                 }
-                if (!ws.contains("arrival")) {
-                    ws.set("arrival", template.getList("arrival"));
+                if (!ws.contains("after-messages")) {
+                    Object old = ws.get("arrival");
+                    ws.set("after-messages", old != null ? old : template.getList("after-messages"));
                 }
+                // remove obsolete keys so the migrated config stays clean
+                ws.set("countdown", null);
+                ws.set("arrival", null);
             }
         }
+        // obsolete global notification section from very old versions
+        getConfig().set("message", null);
         getConfig().set("config-version", bundledVersion);
         saveConfig();
         getLogger().info("Config migrated to version " + bundledVersion);
@@ -98,8 +106,8 @@ public final class VoidReturnPlugin extends JavaPlugin implements CommandExecuto
                     (float) (fallback == null ? 0.0 : fallback.getDouble("yaw", 0.0)),
                     (float) (fallback == null ? 0.0 : fallback.getDouble("pitch", 0.0)),
                     section.getInt("delay-secs", 0),
-                    parseMessages(section, "countdown"),
-                    parseMessages(section, "arrival")));
+                    parseMessages(section, "before-messages"),
+                    parseMessages(section, "after-messages")));
         }
         getLogger().info("Void detection enabled for worlds: " + worldConfigs.keySet());
     }

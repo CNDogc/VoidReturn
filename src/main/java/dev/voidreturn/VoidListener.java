@@ -14,6 +14,7 @@
 package dev.voidreturn;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -28,6 +29,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
@@ -118,7 +121,7 @@ public final class VoidListener implements Listener {
         int totalTicks = totalSecs * 20;
 
         BossBar bar = null;
-        for (MessageSpec m : config.countdown()) {
+        for (MessageSpec m : config.beforeMessages()) {
             if (m.type() == MsgType.BOSS_BAR) {
                 bar = Bukkit.createBossBar(m.text(), BarColor.PURPLE, BarStyle.SOLID);
                 bar.addPlayer(player);
@@ -126,7 +129,8 @@ public final class VoidListener implements Listener {
                 break;
             }
         }
-        updateCountdown(player, config, totalSecs, bar);
+        // Title/subtitle/chat are sent exactly once, with the title stay covering the whole countdown.
+        sendMessages(player, config.beforeMessages(), totalSecs, bar, totalTicks + 20);
 
         final int[] elapsed = {0};
         final BossBar bossBar = bar;
@@ -141,17 +145,10 @@ public final class VoidListener implements Listener {
                 return;
             }
             elapsed[0]++;
-            // Let the player keep falling, but never die from it.
+            // Let the player fall freely; void/fall damage is cancelled by onDamage.
             player.setFallDistance(0f);
-            double minY = player.getWorld().getMinHeight() + 1;
-            if (player.getLocation().getY() < minY) {
-                Location hold = player.getLocation().clone();
-                hold.setY(minY);
-                player.teleport(hold);
-                player.setVelocity(new Vector(0, 0, 0));
-            }
             if (elapsed[0] % 20 == 0) {
-                updateCountdown(player, config, Math.max(0, totalSecs - elapsed[0] / 20), bossBar);
+                updateCountdownBar(player, config, Math.max(0, totalSecs - elapsed[0] / 20), bossBar);
             }
             if (elapsed[0] >= totalTicks) {
                 task[0].cancel();
@@ -164,17 +161,39 @@ public final class VoidListener implements Listener {
         }, 0, 1);
     }
 
-    private void updateCountdown(Player player, WorldConfig config, int remaining, BossBar bar) {
-        if (bar != null) {
-            bar.setProgress(config.delaySecs() > 0 ? (double) remaining / config.delaySecs() : 1.0);
+    // Keep the countdown UI updated each second. Title/subtitle are refreshed with zero fade
+    // so they stay visible even if another plugin overwrites them, without flicker.
+    private void updateCountdownBar(Player player, WorldConfig config, int remaining, BossBar bar) {
+        String title = null, subtitle = null, actionBar = null;
+        for (MessageSpec m : config.beforeMessages()) {
+            String text = ChatColor.translateAlternateColorCodes('&',
+                    m.text().replace("{seconds}", String.valueOf(remaining)));
+            switch (m.type()) {
+                case TITLE -> title = text;
+                case SUBTITLE -> subtitle = text;
+                case ACTION_BAR -> actionBar = text;
+                case BOSS_BAR -> {
+                    if (bar != null) {
+                        bar.setTitle(text);
+                        bar.setProgress(config.delaySecs() > 0 ? (double) remaining / config.delaySecs() : 1.0);
+                    }
+                }
+                default -> { }
+            }
         }
-        sendMessages(player, config.countdown(), remaining, bar);
+        if (title != null || subtitle != null) {
+            player.sendTitle(title == null ? "" : title, subtitle == null ? "" : subtitle, 0, 20, 0);
+        }
+        if (actionBar != null) {
+            player.sendActionBar(actionBar);
+        }
     }
 
-    private void sendMessages(Player player, List<MessageSpec> messages, int remaining, BossBar bar) {
+    private void sendMessages(Player player, List<MessageSpec> messages, int remaining, BossBar bar, int titleStay) {
         String title = null, subtitle = null, actionBar = null, chat = null;
         for (MessageSpec m : messages) {
-            String text = m.text().replace("{seconds}", String.valueOf(remaining));
+            String text = ChatColor.translateAlternateColorCodes('&',
+                    m.text().replace("{seconds}", String.valueOf(remaining)));
             switch (m.type()) {
                 case TITLE -> title = text;
                 case SUBTITLE -> subtitle = text;
@@ -188,7 +207,7 @@ public final class VoidListener implements Listener {
             }
         }
         if (title != null || subtitle != null) {
-            player.sendTitle(title == null ? "" : title, subtitle == null ? "" : subtitle, 10, 40, 10);
+            player.sendTitle(title == null ? "" : title, subtitle == null ? "" : subtitle, 0, titleStay, 0);
         }
         if (actionBar != null) {
             player.sendActionBar(actionBar);
@@ -228,7 +247,7 @@ public final class VoidListener implements Listener {
     }
 
     private void sendArrival(Player player, WorldConfig config) {
-        List<MessageSpec> arrival = config.arrival();
+        List<MessageSpec> arrival = config.afterMessages();
         if (arrival.isEmpty()) {
             return;
         }
@@ -240,7 +259,7 @@ public final class VoidListener implements Listener {
                 break;
             }
         }
-        sendMessages(player, arrival, 0, bar);
+        sendMessages(player, arrival, 0, bar, 40);
         if (bar != null) {
             final BossBar b = bar;
             Bukkit.getScheduler().runTaskLater(plugin, () -> b.removePlayer(player), 40);
@@ -254,6 +273,18 @@ public final class VoidListener implements Listener {
         lastRescue.remove(id);
         countingDown.remove(id);
         saveSourcesAsync();
+    }
+
+    // While a player is inside the countdown, let them fall through the void without dying.
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onDamage(EntityDamageEvent event) {
+        if (!(event.getEntity() instanceof Player player) || !countingDown.contains(player.getUniqueId())) {
+            return;
+        }
+        DamageCause cause = event.getCause();
+        if (cause == DamageCause.VOID || cause == DamageCause.FALL) {
+            event.setCancelled(true);
+        }
     }
 
     private void loadSources() {

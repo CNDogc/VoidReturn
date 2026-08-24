@@ -1,6 +1,6 @@
 # VoidReturn 虚空回溯 · 使用文档 / Usage Guide
 
-> 版本 / Version 2.0.1 · Paper 26.2（Java 25）· 轻量来源记忆型虚空传送插件
+> 版本 / Version 2.0.2 · Paper 26.2（Java 25）· 轻量来源记忆型虚空传送插件
 > Lightweight source-memory void teleport plugin
 
 ---
@@ -17,7 +17,7 @@ After a player teleports across worlds, the plugin records the "world + coords" 
 
 ## 2. 安装 / Installation
 
-1. 将 `VoidReturn-2.0.1.jar` 放入服务器 `plugins/` 目录。Put the jar into the server's `plugins/` folder.
+1. 将 `VoidReturn-2.0.2.jar` 放入服务器 `plugins/` 目录。Put the jar into the server's `plugins/` folder.
 2. 重启服务器（首次启动自动生成 `plugins/VoidReturn/config.yml`）。Restart the server (config is auto-generated on first start).
 3. 编辑 `config.yml` 加入实际世界名，执行 `/voidreturn reload` 热重载。Edit `config.yml` to add your real world names, then `/voidreturn reload` (no restart needed).
 
@@ -67,33 +67,33 @@ enabled-worlds:
 | `fallback.x / y / z` | double | 0.5 / 70.0 / 0.5 | 回退坐标 / Fallback coords |
 | `fallback.yaw / pitch` | float | 0 / 0 | 回退朝向 / Fallback yaw/pitch |
 
-**倒计时传送 / Countdown rescue**：`delay-secs` 指定传回前的倒计时秒数（0 = 立即传送）；配置了 `countdown` 列表则倒计时期间每秒发送对应消息，`{seconds}` 会自动替换为剩余秒数。多种形式可同时叠加，形式支持：`TITLE` / `SUBTITLE` / `ACTION_BAR` / `CHAT` / `BOSS_BAR`。倒计时期间玩家正常下坠且不会死亡。
+**倒计时传送 / Countdown rescue**：`delay-secs` 指定传回前的倒计时秒数（0 = 立即传送）；`before-messages` 列表中 `TITLE`/`SUBTITLE`/`CHAT` 在倒计时开始时发送一次，`ACTION_BAR`/`BOSS_BAR` 每秒刷新（`{seconds}` 自动替换为剩余秒数）。多种形式可同时叠加，倒计时期间玩家正常下坠且不会死亡。
 
 ```yaml
 delay-secs: 3
-countdown:            # [传送前] 倒计时消息
+before-messages:      # [传送前] 倒计时消息
   - type: TITLE
-    text: "&6正在前往伊甸"
+    text: "&6虚空回溯"
   - type: SUBTITLE
-    text: "&e虚空回溯中..."
+    text: "&e正在传送回主城..."
   - type: ACTION_BAR
     text: "&e{seconds} 秒后传送"
   - type: CHAT
-    text: "&a即将传回来源位置..."
+    text: "&a即将传送..."
   - type: BOSS_BAR
     text: "&6虚空回溯"
 ```
 
-**到达提示 / Arrival notification**：玩家最终被传回时发送一次，格式与 `countdown` 相同（同样支持 `TITLE` / `SUBTITLE` / `ACTION_BAR` / `CHAT` / `BOSS_BAR`），**每个世界各自配置**。
+**到达提示 / Arrival notification**：玩家最终被传回时发送一次，格式与 `before-messages` 相同（同样支持 `TITLE` / `SUBTITLE` / `ACTION_BAR` / `CHAT` / `BOSS_BAR`），**每个世界各自配置**。
 
 ```yaml
-arrival:              # [传送后] 到达消息
+after-messages:       # [传送后] 到达消息
   - type: TITLE
     text: "&6虚空回溯"
   - type: SUBTITLE
-    text: "&e你已被传送回来源位置"
+    text: "&e你已回到主城"
   - type: CHAT
-    text: "&a已传回来源位置"
+    text: "&a已传送回主城"
 ```
 
 修改后 `/voidreturn reload` 生效（或重启）。Apply changes with `/voidreturn reload` (or restart).
@@ -136,4 +136,4 @@ arrival:              # [传送后] 到达消息
 
 - 目标 / Target：Paper 26.2（api-version `26.2`），Java 25
 - 依赖 / Dependency：`io.papermc.paper:paper-api:26.2.build.112-stable`（compileOnly）
-- 构建 / Build：`.\gradlew.bat build`，产物 / artifact：`build/libs/VoidReturn-2.0.1.jar`
+- 构建 / Build：`.\gradlew.bat build`，产物 / artifact：`build/libs/VoidReturn-2.0.2.jar`

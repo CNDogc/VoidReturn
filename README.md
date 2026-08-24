@@ -11,7 +11,7 @@ Lightweight Paper plugin: records where a player came from on cross-world telepo
 | API 版本 / api-version | `'26.2'` |
 | Java | 25 |
 | 依赖 / Dependency | `io.papermc.paper:paper-api:26.2.build.112-stable` (compileOnly) |
-| 构建产物 / Artifact | `build/libs/VoidReturn-2.0.1.jar` |
+| 构建产物 / Artifact | `build/libs/VoidReturn-2.0.2.jar` |
 
 ## 功能 / Features
 

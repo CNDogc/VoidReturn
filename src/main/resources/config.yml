@@ -1,39 +1,45 @@
-# Config schema version. On plugin update, new fields are merged into existing
-# configs automatically while preserving your edits. Do not remove this key.
-config-version: 2
+# 配置结构版本 / Config schema version.
+# 插件更新后会自动把新字段合并进已有配置，并保留你的修改。请勿删除此键。
+# On plugin update, new fields are merged into existing configs while preserving your edits. Do not remove this key.
+config-version: 4
 
+# 只有在此列表中的世界才会触发虚空检测，每个世界单独配置。
 # Only worlds listed here trigger void detection. Add one section per world.
-# fallback is used when a player has no recorded cross-world source yet.
 enabled-worlds:
   spawn:
+    # Y 阈值：玩家 Y 低于此值视为掉入虚空 / Y threshold: below this the player is in the void
     void-threshold: -64
+    # 两次救援之间的冷却秒数 / Seconds between rescues
     cooldown-secs: 3
-    # Countdown before teleporting back (in seconds). 0 = instant rescue.
+    # 传送前的倒计时秒数（0 = 立即传送）/ Countdown before teleporting back (0 = instant rescue)
     delay-secs: 3
+    # 无来源记录时的回退落点（坐标须在该世界内）/ Fallback landing spot when no source is recorded
     fallback:
       x: 0.5
       y: 70.0
       z: 0.5
       yaw: 0
       pitch: 0
-    # [传送前] 倒计时消息：玩家下坠期间每秒发送，{seconds} = 剩余秒数（自动倒计时）。
-    # Forms: TITLE, SUBTITLE, ACTION_BAR, CHAT, BOSS_BAR（可多种同时）
-    countdown:
+    # [传送前] 倒计时消息：开始时发送一次（title/subtitle/chat），倒计时期间每秒刷新 actionbar/bossbar。
+    # [Before] Countdown messages: title/subtitle/chat are sent once at start; actionbar/bossbar refresh every second.
+    # {seconds} = 剩余秒数（自动倒计时），形式 / Forms: TITLE, SUBTITLE, ACTION_BAR, CHAT, BOSS_BAR
+    before-messages:
       - type: TITLE
-        text: "&6正在前往伊甸"
+        text: "&6虚空回溯"
       - type: SUBTITLE
-        text: "&e虚空回溯中..."
+        text: "&e正在传送回主城..."
       - type: ACTION_BAR
         text: "&e{seconds} 秒后传送"
       - type: CHAT
-        text: "&a即将传回来源位置..."
+        text: "&a即将传送..."
       - type: BOSS_BAR
         text: "&6虚空回溯"
-    # [传送后] 到达消息：传回完成后发送一次。格式与 countdown 相同。
-    arrival:
+    # [传送后] 到达消息：传回完成后发送一次，格式与 before-messages 相同。
+    # [After] Arrival notification sent once after teleport; same format as before-messages.
+    after-messages:
       - type: TITLE
         text: "&6虚空回溯"
       - type: SUBTITLE
-        text: "&e你已被传送回来源位置"
+        text: "&e你已回到主城"
       - type: CHAT
-        text: "&a已传回来源位置"
+        text: "&a已传送回主城"
