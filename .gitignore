@@ -9,3 +9,6 @@ build/
 
 # Test server
 .smoketest/
+
+# IDE workspace meta
+.trae/
