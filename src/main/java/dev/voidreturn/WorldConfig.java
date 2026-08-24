@@ -11,10 +11,10 @@ record MessageSpec(MsgType type, String text) {
 record WorldConfig(double voidThreshold, long cooldownMillis,
                    double fallbackX, double fallbackY, double fallbackZ,
                    float fallbackYaw, float fallbackPitch,
-                   int delaySecs, List<MessageSpec> messages) {
+                   int delaySecs, List<MessageSpec> countdown, List<MessageSpec> arrival) {
 
     boolean hasCountdown() {
-        return delaySecs > 0 && !messages.isEmpty();
+        return delaySecs > 0 && !countdown.isEmpty();
     }
 
     static MsgType parseType(String s) {

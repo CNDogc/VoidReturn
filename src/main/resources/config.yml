@@ -12,10 +12,9 @@ enabled-worlds:
       z: 0.5
       yaw: 0
       pitch: 0
-    # Messages shown while the player is falling during the countdown.
-    # {seconds} = remaining countdown (auto countdown). Multiple forms can be combined.
-    # Forms: TITLE, SUBTITLE, ACTION_BAR, CHAT, BOSS_BAR
-    messages:
+    # [传送前] 倒计时消息：玩家下坠期间每秒发送，{seconds} = 剩余秒数（自动倒计时）。
+    # Forms: TITLE, SUBTITLE, ACTION_BAR, CHAT, BOSS_BAR（可多种同时）
+    countdown:
       - type: TITLE
         text: "&6正在前往伊甸"
       - type: SUBTITLE
@@ -26,10 +25,11 @@ enabled-worlds:
         text: "&a即将传回来源位置..."
       - type: BOSS_BAR
         text: "&6虚空回溯"
-
-# Rescue notification, sent when the player is finally saved (after the countdown).
-# Leave a value empty ("") to disable that form. Supports & color codes.
-message:
-  title: "&6虚空回溯"
-  subtitle: "&e你已被传送回来源位置"
-  chat: ""
+    # [传送后] 到达消息：传回完成后发送一次。格式与 countdown 相同。
+    arrival:
+      - type: TITLE
+        text: "&6虚空回溯"
+      - type: SUBTITLE
+        text: "&e你已被传送回来源位置"
+      - type: CHAT
+        text: "&a已传回来源位置"

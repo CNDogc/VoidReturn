@@ -67,11 +67,11 @@ enabled-worlds:
 | `fallback.x / y / z` | double | 0.5 / 70.0 / 0.5 | 回退坐标 / Fallback coords |
 | `fallback.yaw / pitch` | float | 0 / 0 | 回退朝向 / Fallback yaw/pitch |
 
-**倒计时传送 / Countdown rescue**：`delay-secs` 指定传回前的倒计时秒数（0 = 立即传送）；配置了 `messages` 列表则倒计时期间发送对应消息，`{seconds}` 会自动替换为剩余秒数。多种形式可同时叠加，形式支持：`TITLE` / `SUBTITLE` / `ACTION_BAR` / `CHAT` / `BOSS_BAR`。倒计时期间玩家正常下坠且不会死亡。
+**倒计时传送 / Countdown rescue**：`delay-secs` 指定传回前的倒计时秒数（0 = 立即传送）；配置了 `countdown` 列表则倒计时期间每秒发送对应消息，`{seconds}` 会自动替换为剩余秒数。多种形式可同时叠加，形式支持：`TITLE` / `SUBTITLE` / `ACTION_BAR` / `CHAT` / `BOSS_BAR`。倒计时期间玩家正常下坠且不会死亡。
 
 ```yaml
 delay-secs: 3
-messages:
+countdown:            # [传送前] 倒计时消息
   - type: TITLE
     text: "&6正在前往伊甸"
   - type: SUBTITLE
@@ -84,13 +84,16 @@ messages:
     text: "&6虚空回溯"
 ```
 
-**救援提示 / Rescue notification**：玩家最终被传回时发送，支持 `&` 颜色代码。留空 `""` 则禁用对应形式。
+**到达提示 / Arrival notification**：玩家最终被传回时发送一次，格式与 `countdown` 相同（同样支持 `TITLE` / `SUBTITLE` / `ACTION_BAR` / `CHAT` / `BOSS_BAR`），**每个世界各自配置**。
 
 ```yaml
-message:
-  title: "&6虚空回溯"                 # 满屏大标题（空 = 不显示）/ Full-screen title (empty = off)
-  subtitle: "&e你已被传送回来源位置"      # 满屏副标题（空 = 不显示）/ Full-screen subtitle (empty = off)
-  chat: ""                          # 聊天框消息（空 = 不显示）/ Chat message (empty = off)
+arrival:              # [传送后] 到达消息
+  - type: TITLE
+    text: "&6虚空回溯"
+  - type: SUBTITLE
+    text: "&e你已被传送回来源位置"
+  - type: CHAT
+    text: "&a已传回来源位置"
 ```
 
 修改后 `/voidreturn reload` 生效（或重启）。Apply changes with `/voidreturn reload` (or restart).

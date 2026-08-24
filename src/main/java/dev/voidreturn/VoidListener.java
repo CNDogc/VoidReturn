@@ -36,6 +36,7 @@ import org.bukkit.util.Vector;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -117,7 +118,7 @@ public final class VoidListener implements Listener {
         int totalTicks = totalSecs * 20;
 
         BossBar bar = null;
-        for (MessageSpec m : config.messages()) {
+        for (MessageSpec m : config.countdown()) {
             if (m.type() == MsgType.BOSS_BAR) {
                 bar = Bukkit.createBossBar(m.text(), BarColor.PURPLE, BarStyle.SOLID);
                 bar.addPlayer(player);
@@ -164,8 +165,15 @@ public final class VoidListener implements Listener {
     }
 
     private void updateCountdown(Player player, WorldConfig config, int remaining, BossBar bar) {
+        if (bar != null) {
+            bar.setProgress(config.delaySecs() > 0 ? (double) remaining / config.delaySecs() : 1.0);
+        }
+        sendMessages(player, config.countdown(), remaining, bar);
+    }
+
+    private void sendMessages(Player player, List<MessageSpec> messages, int remaining, BossBar bar) {
         String title = null, subtitle = null, actionBar = null, chat = null;
-        for (MessageSpec m : config.messages()) {
+        for (MessageSpec m : messages) {
             String text = m.text().replace("{seconds}", String.valueOf(remaining));
             switch (m.type()) {
                 case TITLE -> title = text;
@@ -175,7 +183,6 @@ public final class VoidListener implements Listener {
                 case BOSS_BAR -> {
                     if (bar != null) {
                         bar.setTitle(text);
-                        bar.setProgress(config.delaySecs() > 0 ? (double) remaining / config.delaySecs() : 1.0);
                     }
                 }
             }
@@ -214,9 +221,29 @@ public final class VoidListener implements Listener {
             // Reset fall state so the player does not die from the earlier fall.
             player.setFallDistance(0f);
             player.setVelocity(new Vector(0, 0, 0));
-            plugin.sendRescueMessage(player);
+            sendArrival(player, config);
         } finally {
             rescuing.remove(id);
+        }
+    }
+
+    private void sendArrival(Player player, WorldConfig config) {
+        List<MessageSpec> arrival = config.arrival();
+        if (arrival.isEmpty()) {
+            return;
+        }
+        BossBar bar = null;
+        for (MessageSpec m : arrival) {
+            if (m.type() == MsgType.BOSS_BAR) {
+                bar = Bukkit.createBossBar(m.text(), BarColor.PURPLE, BarStyle.SOLID);
+                bar.addPlayer(player);
+                break;
+            }
+        }
+        sendMessages(player, arrival, 0, bar);
+        if (bar != null) {
+            final BossBar b = bar;
+            Bukkit.getScheduler().runTaskLater(plugin, () -> b.removePlayer(player), 40);
         }
     }
 
