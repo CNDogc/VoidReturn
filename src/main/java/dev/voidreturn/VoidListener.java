@@ -1,4 +1,21 @@
 /*
+ * VoidReturn - Source-memory void teleport plugin for Paper
+ * Copyright (C) 2026 狗晨Yz
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+/*
  * Safe landing-spot search (air at feet and head, solid ground below, 3-block
  * radius scan) is based on NoVoidX by UnknowUser0:
  * https://github.com/UnknowUser0/NoVoidX

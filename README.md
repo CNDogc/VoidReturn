@@ -1,5 +1,7 @@
 # VoidReturn 虚空回溯
 
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+
 轻量 Paper 插件：记录玩家跨世界传送的来源位置，掉入虚空时自动传送回来源。
 Lightweight Paper plugin: records where a player came from on cross-world teleports, and sends them back when they fall into the void.
 
@@ -11,7 +13,7 @@ Lightweight Paper plugin: records where a player came from on cross-world telepo
 | API 版本 / api-version | `'26.2'` |
 | Java | 25 |
 | 依赖 / Dependency | `io.papermc.paper:paper-api:26.2.build.112-stable` (compileOnly) |
-| 构建产物 / Artifact | `build/libs/VoidReturn-2.0.3.jar` |
+| 构建产物 / Artifact | `build/libs/VoidReturn-2.0.4.jar` |
 
 ## 功能 / Features
 
@@ -27,6 +29,10 @@ Lightweight Paper plugin: records where a player came from on cross-world telepo
 
 完整指令与配置说明（中英双语）见 [USAGE.md](USAGE.md)。
 Full command and configuration guide (bilingual) is in [USAGE.md](USAGE.md).
+
+## 许可证 / License
+
+[GNU General Public License v3.0](LICENSE)
 
 ## 归属声明 / Attribution
 
