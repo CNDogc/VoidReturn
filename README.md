@@ -9,11 +9,11 @@ Lightweight Paper plugin: records where a player came from on cross-world telepo
 
 | 项目 / Item | 值 / Value |
 | --- | --- |
-| 目标服务器 / Target server | Paper 26.2（`paper-26.2-112`），Minecraft 26.2 |
-| API 版本 / api-version | `'26.2'` |
-| Java | 25 |
-| 依赖 / Dependency | `io.papermc.paper:paper-api:26.2.build.112-stable` (compileOnly) |
-| 构建产物 / Artifact | `build/libs/VoidReturn-2.0.4.jar` |
+| 兼容范围 / Compatibility | Paper 1.17.x – 26.x（理论兼容；仅 26.2 实测）/ Theoretical 1.17–26.x, verified on 26.2 |
+| API 版本 / api-version | `'1.17'` |
+| Java | 17（字节码目标；26.x 服以 Java 25 运行）/ 17 bytecode target (26.x servers run it on Java 25) |
+| 依赖 / Dependency | `io.papermc.paper:paper-api:1.17.1-R0.1-SNAPSHOT` (compileOnly，按最老支持线编译 / built against the oldest supported line) |
+| 构建产物 / Artifact | `build/libs/VoidReturn-2.0.5.jar` |
 
 ## 功能 / Features
 
@@ -33,6 +33,13 @@ Full command and configuration guide (bilingual) is in [USAGE.md](USAGE.md).
 ## 许可证 / License
 
 [GNU General Public License v3.0](LICENSE)
+
+## 多版本适配 / Multi-version Support
+
+单个 jar 兼容 Paper 1.17.x – 26.x：按最低支持线（1.17.1）编译、`api-version: '1.17'`、Java 17 字节码。核心逻辑只使用跨版本稳定的 Bukkit/Paper API。
+**注意：1.17 – 1.21 为理论兼容（未逐一实测），仅 26.2 在本机实测过。**
+A single jar targets Paper 1.17.x – 26.x: compiled against the lowest supported line (1.17.1), `api-version: '1.17'`, Java 17 bytecode. All logic uses only stable cross-version Bukkit/Paper APIs.
+**Note: 1.17–1.21 is theoretical (not individually tested); only 26.2 is verified locally.**
 
 ## 归属声明 / Attribution
 

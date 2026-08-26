@@ -237,7 +237,8 @@ public final class VoidListener implements Listener {
     private void performRescue(Player player, WorldConfig config) {
         UUID id = player.getUniqueId();
         Location target = lastSource.get(id);
-        if (target == null || !target.isWorldLoaded()) {
+        // getWorld() returns null when the stored source world is no longer loaded (portable across API versions).
+        if (target == null || target.getWorld() == null) {
             target = new Location(player.getWorld(), config.fallbackX(), config.fallbackY(), config.fallbackZ(),
                     config.fallbackYaw(), config.fallbackPitch());
         }

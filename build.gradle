@@ -3,7 +3,7 @@ plugins {
 }
 
 group = 'dev.voidreturn'
-version = '2.0.4'
+version = '2.0.5'
 
 repositories {
     mavenCentral()
@@ -14,16 +14,20 @@ repositories {
 }
 
 dependencies {
-    // Matches the local server jar paper-26.2-112.jar
-    compileOnly 'io.papermc.paper:paper-api:26.2.build.112-stable'
+    // Compile against the OLDEST supported API line (Paper 1.17.1) so the jar
+    // loads on every version from 1.17.x up to 26.x, and to avoid accidentally
+    // using version-specific APIs. Runs unmodified on the local 26.2 server.
+    compileOnly 'io.papermc.paper:paper-api:1.17.1-R0.1-SNAPSHOT'
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_25
-    targetCompatibility = JavaVersion.VERSION_25
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
-    options.release = 25
+    // Java 17 bytecode covers 1.17–1.20.4 (Java 17), 1.20.5+ (Java 21) and 26.x (Java 25).
+    // Going below 1.17 would need Java 8 and non-record classes; not worth supporting.
+    options.release = 17
 }
