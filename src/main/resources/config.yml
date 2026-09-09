@@ -20,8 +20,8 @@ enabled-worlds:
       z: 0.5
       yaw: 0
       pitch: 0
-    # [传送前] 倒计时消息：开始时发送一次（title/subtitle/chat），倒计时期间每秒刷新 actionbar/bossbar。
-    # [Before] Countdown messages: title/subtitle/chat are sent once at start; actionbar/bossbar refresh every second.
+    # [传送前] 倒计时消息：开始时发送一次 title/subtitle/chat，title 在每个 tick 重发以确保 3 秒全程稳定显示；actionbar/bossbar 每秒刷新一次。
+    # [Before] Countdown messages: title/subtitle/chat are sent once at start, the title is then re-sent every tick to stay on screen the whole countdown; action bar/boss bar refresh once per second.
     # {seconds} = 剩余秒数（自动倒计时），形式 / Forms: TITLE, SUBTITLE, ACTION_BAR, CHAT, BOSS_BAR
     before-messages:
       - type: TITLE
