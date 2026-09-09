@@ -30,6 +30,9 @@
  */
 package dev.voidreturn;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -169,7 +172,7 @@ public final class VoidListener implements Listener {
             player.setFallDistance(0f);
             updateCountdownBar(player, config,
                     (int) Math.max(0, Math.ceil((totalTicks - elapsed[0]) / 20.0)), bossBar,
-                    elapsed[0] % 20 == 0);
+                    elapsed[0] % 20 == 0, elapsed[0]);
             if (elapsed[0] >= totalTicks) {
                 task[0].cancel();
                 if (bossBar != null) {
@@ -184,8 +187,10 @@ public final class VoidListener implements Listener {
     // Title is re-sent every tick so a brief client-side fade-out is restored within 50ms
     // and never visible to the player. Action bar and boss bar refresh once per second
     // (when refreshBar=true) so the displayed number still changes only once per second.
+    // @param tick the elapsed-tick counter, used to vary the subtitle per tick so the client
+    //   does not dedupe identical title packets.
     private void updateCountdownBar(Player player, WorldConfig config, int remaining, BossBar bar,
-                                    boolean refreshBar) {
+                                    boolean refreshBar, int tick) {
         String title = null, subtitle = null, actionBar = null;
         for (MessageSpec m : config.beforeMessages()) {
             String text = ChatColor.translateAlternateColorCodes('&',
@@ -207,10 +212,13 @@ public final class VoidListener implements Listener {
             player.sendActionBar(actionBar);
         }
         if (title != null || subtitle != null) {
-            // Stay = remaining countdown + 2s buffer; sent every tick so any short-lived
-            // client-side reset never leaves the title blank.
-            player.sendTitle(title == null ? "" : title, subtitle == null ? "" : subtitle,
-                    0, remaining * 20 + 40, 0);
+            // Stay = remaining countdown + 2s buffer; sent every tick. The subtitle carries
+            // a ZWSP that flips each tick so the client does not dedupe consecutive identical
+            // title packets, which is what was leaving a single-frame blank at t=0.40s.
+            Component titleComp = LegacyComponentSerializer.legacySection().deserialize(title == null ? "" : title);
+            String subText = (subtitle == null ? "" : subtitle) + (tick % 2 == 0 ? "" : "\u200B");
+            Component subComp = LegacyComponentSerializer.legacySection().deserialize(subText);
+            player.showTitle(Title.title(titleComp, subComp));
         }
     }
 
@@ -240,7 +248,11 @@ public final class VoidListener implements Listener {
         if (title != null || subtitle != null) {
             // Sent LAST so the action bar / chat in this batch cannot cut it short.
             // Do NOT clear the title first: a clear packet makes the first title flash.
-            player.sendTitle(title == null ? "" : title, subtitle == null ? "" : subtitle, 0, titleStay, 0);
+            // Uses Adventure default Times (fadeIn 10 / stay 70 / fadeOut 20) and the same
+            // ZWSP-varied subtitle trick so the title sticks without a one-frame blank.
+            Component titleComp = LegacyComponentSerializer.legacySection().deserialize(title == null ? "" : title);
+            Component subComp = LegacyComponentSerializer.legacySection().deserialize(subtitle == null ? "" : subtitle);
+            player.showTitle(Title.title(titleComp, subComp));
         }
     }
 
