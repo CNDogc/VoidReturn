@@ -1,5 +1,5 @@
 name: VoidReturn
-version: 2.2.1
+version: 2.2.0
 main: dev.voidreturn.VoidReturnPlugin
 api-version: '1.17'
 description: Sends players falling into the void back to their last cross-world origin.
