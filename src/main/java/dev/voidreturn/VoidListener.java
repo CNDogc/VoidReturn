@@ -67,9 +67,6 @@ public final class VoidListener implements Listener {
 
     private static final int SEARCH_RADIUS = 3;
     private static final int SAVE_INTERVAL_TICKS = 40; // 2s debounce window
-    // Invisible marker used to make consecutive title packets differ so the client does
-    // not dedupe them (see updateCountdownBar).
-    private static final String ZERO_WIDTH_SPACE = "\u200B";
 
     private final VoidReturnPlugin plugin;
     private final File dataFile;
@@ -172,7 +169,7 @@ public final class VoidListener implements Listener {
             player.setFallDistance(0f);
             updateCountdownBar(player, config,
                     (int) Math.max(0, Math.ceil((totalTicks - elapsed[0]) / 20.0)), bossBar,
-                    elapsed[0] % 20 == 0, elapsed[0]);
+                    elapsed[0] % 20 == 0);
             if (elapsed[0] >= totalTicks) {
                 task[0].cancel();
                 if (bossBar != null) {
@@ -187,10 +184,8 @@ public final class VoidListener implements Listener {
     // Title is re-sent every tick so a brief client-side fade-out is restored within 50ms
     // and never visible to the player. Action bar and boss bar refresh once per second
     // (when refreshBar=true) so the displayed number still changes only once per second.
-    // @param tick elapsed tick counter; alternates a zero-width space in the subtitle so
-    //   consecutive title packets differ and are not deduped by the client.
     private void updateCountdownBar(Player player, WorldConfig config, int remaining, BossBar bar,
-                                    boolean refreshBar, int tick) {
+                                    boolean refreshBar) {
         String title = null, subtitle = null, actionBar = null;
         for (MessageSpec m : config.beforeMessages()) {
             String text = ChatColor.translateAlternateColorCodes('&',
@@ -212,11 +207,9 @@ public final class VoidListener implements Listener {
             player.sendActionBar(actionBar);
         }
         if (title != null || subtitle != null) {
-            // Stay = remaining countdown + 2s buffer, sent every tick. The subtitle carries a
-            // zero-width space that flips each tick: the client dedupes byte-identical title
-            // packets, which is what left a one-frame blank at t=0.40s.
-            String subText = (subtitle == null ? "" : subtitle) + (tick % 2 == 0 ? "" : ZERO_WIDTH_SPACE);
-            player.sendTitle(title == null ? "" : title, subText,
+            // Stay = remaining countdown + 2s buffer; sent every tick so any short-lived
+            // client-side reset never leaves the title blank.
+            player.sendTitle(title == null ? "" : title, subtitle == null ? "" : subtitle,
                     0, remaining * 20 + 40, 0);
         }
     }

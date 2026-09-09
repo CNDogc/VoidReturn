@@ -3,7 +3,7 @@ plugins {
 }
 
 group = 'dev.voidreturn'
-version = '2.2.2'
+version = '2.2.0'
 
 repositories {
     mavenCentral()
