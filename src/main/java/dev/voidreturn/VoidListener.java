@@ -146,7 +146,8 @@ public final class VoidListener implements Listener {
                 break;
             }
         }
-        // Title/subtitle/chat are sent exactly once, with the title stay covering the whole countdown.
+        // Title/subtitle get an initial stay covering the whole countdown; the refresh task
+        // below re-sends them twice a second so a wiped title is restored within 0.5s.
         sendMessages(player, config.beforeMessages(), totalSecs, bar, totalTicks + 20);
 
         final int[] elapsed = {0};
@@ -164,8 +165,11 @@ public final class VoidListener implements Listener {
             elapsed[0]++;
             // Let the player fall freely; void/fall damage is cancelled by onDamage.
             player.setFallDistance(0f);
-            if (elapsed[0] % 20 == 0) {
-                updateCountdownBar(player, config, Math.max(0, totalSecs - elapsed[0] / 20), bossBar);
+            // Refresh twice a second so a title wiped by another HUD packet is restored
+            // within 0.5s; the displayed number still changes once per second (ceil).
+            if (elapsed[0] % 10 == 0) {
+                updateCountdownBar(player, config,
+                        (int) Math.max(0, Math.ceil((totalTicks - elapsed[0]) / 20.0)), bossBar);
             }
             if (elapsed[0] >= totalTicks) {
                 task[0].cancel();
@@ -178,8 +182,11 @@ public final class VoidListener implements Listener {
         }, 0, 1);
     }
 
-    // Keep the countdown UI updated each second. Title/subtitle are refreshed with zero fade
-    // so they stay visible even if another plugin overwrites them, without flicker.
+    // Refresh the countdown UI twice a second. Order matters: action bar and boss bar are
+    // updated FIRST, the title is re-sent LAST, because a HUD packet arriving after the
+    // title can end its display early. The client does NOT restart the title timer when a
+    // title is re-sent - it applies the new stay against the time already displayed - so
+    // the stay must always exceed the whole remaining countdown, never just 1 second.
     private void updateCountdownBar(Player player, WorldConfig config, int remaining, BossBar bar) {
         String title = null, subtitle = null, actionBar = null;
         for (MessageSpec m : config.beforeMessages()) {
@@ -198,11 +205,14 @@ public final class VoidListener implements Listener {
                 default -> { }
             }
         }
-        if (title != null || subtitle != null) {
-            player.sendTitle(title == null ? "" : title, subtitle == null ? "" : subtitle, 0, 20, 0);
-        }
         if (actionBar != null) {
             player.sendActionBar(actionBar);
+        }
+        if (title != null || subtitle != null) {
+            // Stay = remaining countdown + 2s buffer, so it always exceeds the time the
+            // client has already displayed the title and never expires early.
+            player.sendTitle(title == null ? "" : title, subtitle == null ? "" : subtitle,
+                    0, remaining * 20 + 40, 0);
         }
     }
 
@@ -223,14 +233,16 @@ public final class VoidListener implements Listener {
                 }
             }
         }
-        if (title != null || subtitle != null) {
-            player.sendTitle(title == null ? "" : title, subtitle == null ? "" : subtitle, 0, titleStay, 0);
+        if (chat != null) {
+            player.sendMessage(chat);
         }
         if (actionBar != null) {
             player.sendActionBar(actionBar);
         }
-        if (chat != null) {
-            player.sendMessage(chat);
+        if (title != null || subtitle != null) {
+            // Sent LAST so the action bar / chat in this batch cannot cut it short.
+            // Do NOT clear the title first: a clear packet makes the first title flash.
+            player.sendTitle(title == null ? "" : title, subtitle == null ? "" : subtitle, 0, titleStay, 0);
         }
     }
 
